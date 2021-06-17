@@ -98,7 +98,7 @@ function binn(
               const bb = fx(g);
               if (bb.length === 0) continue;
               for (const [y1, y2, fy] of BY) {
-                const b = fy(bb);
+                const b = Object.assign(fy(bb), {x1, x2, y1, y2});
                 if (b.length === 0) continue;
                 groupFacet.push(i++);
                 groupData.push(reduceData.reduce(b, data));

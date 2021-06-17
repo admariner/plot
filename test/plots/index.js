@@ -85,6 +85,8 @@ export {default as simpsonsRatings} from "./simpsons-ratings.js";
 export {default as simpsonsRatingsDots} from "./simpsons-ratings-dots.js";
 export {default as simpsonsViews} from "./simpsons-views.js";
 export {default as stackedBar} from "./stacked-bar.js";
+export {default as stargazers} from "./stargazers.js";
+export {default as stargazersBinned} from "./stargazers-binned.js";
 export {default as stocksIndex} from "./stocks-index.js";
 export {default as travelersYearOverYear} from "./travelers-year-over-year.js";
 export {default as uniformRandomDifference} from "./uniform-random-difference.js";
