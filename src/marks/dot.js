@@ -1,7 +1,7 @@
 import {create} from "d3";
 import {filter, positive} from "../defined.js";
 import {Mark, identity, maybeColor, maybeNumber, maybeTuple, title} from "../mark.js";
-import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr} from "../style.js";
+import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr, offset} from "../style.js";
 
 export class Dot extends Mark {
   constructor(
@@ -55,9 +55,10 @@ export class Dot extends Mark {
   ) {
     let index = filter(I, X, Y, F, FO, S, SO);
     if (R) index = index.filter(i => positive(R[i]));
+    const {dx, dy} = this;
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(applyTransform, x, y, 0.5, 0.5)
+        .call(applyTransform, x, y, offset + dx, offset + dy)
         .call(g => g.selectAll()
           .data(index)
           .join("circle")

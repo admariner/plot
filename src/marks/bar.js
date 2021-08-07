@@ -55,12 +55,12 @@ export class AbstractBar extends Mark {
     this.ry = impliedString(ry, "auto");
   }
   render(I, scales, channels, dimensions) {
-    const {rx, ry} = this;
+    const {dx, dy, rx, ry} = this;
     const {title: L, fill: F, fillOpacity: FO, stroke: S, strokeOpacity: SO} = channels;
     const index = filter(I, ...this._positions(channels), F, FO, S, SO);
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(this._transform, scales)
+        .call(this._transform, scales, dx, dy)
         .call(g => g.selectAll()
           .data(index)
           .join("rect")
@@ -110,8 +110,8 @@ export class BarX extends AbstractBar {
       options
     );
   }
-  _transform(selection, {x}) {
-    selection.call(applyTransform, x, null);
+  _transform(selection, {x}, dx, dy) {
+    selection.call(applyTransform, x, null, dx, dy);
   }
   _positions({x1: X1, x2: X2, y: Y}) {
     return [X1, X2, Y];
@@ -138,8 +138,8 @@ export class BarY extends AbstractBar {
       options
     );
   }
-  _transform(selection, {y}) {
-    selection.call(applyTransform, null, y);
+  _transform(selection, {y}, dx, dy) {
+    selection.call(applyTransform, null, y, dx, dy);
   }
   _positions({y1: Y1, y2: Y2, x: X}) {
     return [Y1, Y2, X];

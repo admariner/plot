@@ -7,7 +7,7 @@ const TypedArray = Object.getPrototypeOf(Uint8Array);
 const objectToString = Object.prototype.toString;
 
 export class Mark {
-  constructor(data, channels = [], {facet = "auto", ...options} = {}) {
+  constructor(data, channels = [], {facet = "auto", dx, dy, ...options} = {}) {
     const names = new Set();
     this.data = data;
     this.facet = facet ? keyword(facet === true ? "include" : facet, "facet", ["auto", "include", "exclude"]) : null;
@@ -27,6 +27,8 @@ export class Mark {
       }
       return true;
     });
+    this.dx = +dx || 0;
+    this.dy = +dy || 0;
   }
   initialize(facets) {
     let data = arrayify(this.data);

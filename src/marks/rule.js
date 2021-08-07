@@ -1,7 +1,7 @@
 import {create} from "d3";
 import {filter} from "../defined.js";
 import {Mark, identity, maybeColor, title, number, maybeNumber} from "../mark.js";
-import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr} from "../style.js";
+import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr, offset} from "../style.js";
 
 export class RuleX extends Mark {
   constructor(
@@ -46,7 +46,7 @@ export class RuleX extends Mark {
     const index = filter(I, X, Y1, Y2, S);
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(applyTransform, X && x, null, 0.5, 0)
+        .call(applyTransform, X && x, null, offset, 0)
         .call(g => g.selectAll("line")
           .data(index)
           .join("line")
@@ -103,9 +103,10 @@ export class RuleY extends Mark {
     {width, height, marginTop, marginRight, marginLeft, marginBottom}
   ) {
     const index = filter(I, Y, X1, X2);
+    const {dx, dy} = this;
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(applyTransform, null, Y && y, 0, 0.5)
+        .call(applyTransform, null, Y && y, dx, offset + dy)
         .call(g => g.selectAll("line")
           .data(index)
           .join("line")

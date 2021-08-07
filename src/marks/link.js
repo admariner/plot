@@ -2,7 +2,7 @@ import {create, path} from "d3";
 import {filter} from "../defined.js";
 import {Mark, maybeColor, maybeNumber, title} from "../mark.js";
 import {Curve} from "../curve.js";
-import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr} from "../style.js";
+import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr, offset} from "../style.js";
 
 export class Link extends Mark {
   constructor(
@@ -56,9 +56,10 @@ export class Link extends Mark {
     {x1: X1, y1: Y1, x2: X2 = X1, y2: Y2 = Y1, title: L, stroke: S, strokeOpacity: SO}
   ) {
     const index = filter(I, X1, Y1, X2, Y2, S, SO);
+    const {dx, dy} = this;
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(applyTransform, x, y, 0.5, 0.5)
+        .call(applyTransform, x, y, offset + dx, offset + dy)
         .call(g => g.selectAll()
           .data(index)
           .join("path")

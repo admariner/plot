@@ -4,7 +4,7 @@ import {line as shapeLine} from "d3";
 import {Curve} from "../curve.js";
 import {defined} from "../defined.js";
 import {Mark, indexOf, identity, maybeColor, maybeTuple, titleGroup, maybeNumber} from "../mark.js";
-import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr} from "../style.js";
+import {Style, applyDirectStyles, applyIndirectStyles, applyTransform, applyAttr, offset} from "../style.js";
 
 export class Line extends Mark {
   constructor(
@@ -55,9 +55,10 @@ export class Line extends Mark {
     });
   }
   render(I, {x, y}, {x: X, y: Y, z: Z, title: L, fill: F, fillOpacity: FO, stroke: S, strokeOpacity: SO}) {
+    const {dx, dy} = this;
     return create("svg:g")
         .call(applyIndirectStyles, this)
-        .call(applyTransform, x, y, 0.5, 0.5)
+        .call(applyTransform, x, y, offset + dx, offset + dy)
         .call(g => g.selectAll()
           .data(Z ? group(I, i => Z[i]).values() : [I])
           .join("path")
