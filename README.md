@@ -12,7 +12,7 @@
 
 In Observable notebooks, Plot and D3 are available by default as part of the [standard library](https://observablehq.com/@observablehq/recommended-libraries).
 
-For use with Webpack, Rollup, or other Node-based bundlers, Plot is typically installed via a package manager such as Yarn or npm.
+For use with Webpack, Rollup, or other Node-based bundlers, Plot is typically installed via a package manager such as Yarn or npm. (Plot is distributed as an ES module; see [Sindre Sorhus’s guide](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c) for help upgrading.)
 
 ```bash
 yarn add @observablehq/plot
@@ -29,7 +29,7 @@ In vanilla HTML, Plot can be imported as an ES module, say from Skypack:
 ```html
 <script type="module">
 
-import * as Plot from "https://cdn.skypack.dev/@observablehq/plot@0.1";
+import * as Plot from "https://cdn.skypack.dev/@observablehq/plot@0.2";
 
 document.body.appendChild(Plot.plot(options));
 
@@ -39,8 +39,8 @@ document.body.appendChild(Plot.plot(options));
 Plot is also available as a UMD bundle for legacy browsers.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/d3@6"></script>
-<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.2"></script>
 <script>
 
 document.body.appendChild(Plot.plot(options));
@@ -54,7 +54,7 @@ Renders a new plot given the specified *options* and returns the corresponding S
 
 ### Mark options
 
-The **marks** option specifies an array of [marks](#marks) to render. Each mark has its own data and options; see the respective mark type (*e.g.*, [bar](#bar) or [dot](#dot)) for which mark options are supported. Each mark may be a nested array of marks, allowing composition. Marks may also be a function which returns an SVG element, if you wish to insert some arbtirary content into your plot. And marks may be null or undefined, which produce no output; this is useful for having marks shown conditionally (*e.g.*, when a box is checked). Marks are drawn in *z*-order, last on top. For example, here bars for the dataset *alphabet* are drawn on top of a single rule at *y* = 0.
+The **marks** option specifies an array of [marks](#marks) to render. Each mark has its own data and options; see the respective mark type (*e.g.*, [bar](#bar) or [dot](#dot)) for which mark options are supported. Each mark may be a nested array of marks, allowing composition. Marks may also be a function which returns an SVG element, if you wish to insert some arbitrary content into your plot. And marks may be null or undefined, which produce no output; this is useful for showing marks conditionally (*e.g.*, when a box is checked). Marks are drawn in *z*-order, last on top. For example, here bars for the dataset *alphabet* are drawn on top of a single rule at *y* = 0.
 
 ```js
 Plot.plot({
@@ -70,7 +70,6 @@ When drawing a single mark, you can call *mark*.**plot**(*options*) as shorthand
 ```js
 Plot.barY(alphabet, {x: "letter", y: "frequency"}).plot()
 ```
-
 ### Layout options
 
 These options determine the overall layout of the plot; all are specified as numbers in pixels:
@@ -172,7 +171,7 @@ A scale’s domain (the extent of its inputs, abstract values) and range (the ex
 * *scale*.**range** - typically [*min*, *max*], or an array of ordinal or categorical values
 * *scale*.**reverse** - reverses the domain, say to flip the chart along *x* or *y*
 
-For most quantitative scales, the default domain is the [*min*, *max*] of all values associated with the scale. For the *radius* and *opacity* scales, the default domain is [0, *max*] to ensure a meaningful value encoding. For ordinal scales, the default domain is the set of all distinct values associated with the scale in natural ascending order; set the domain explicitly for a different order. For threshold scales, the default domain is [0] to separate negative and non-negative values. For quantile scales, the default domain is the set of all defined values associated with the scale. If a scale is reversed, it is equivalent to setting the domain as [*max*, *min*] instead of [*min*, *max*].
+For most quantitative scales, the default domain is the [*min*, *max*] of all values associated with the scale. For the *radius* and *opacity* scales, the default domain is [0, *max*] to ensure a meaningful value encoding. For ordinal scales, the default domain is the set of all distinct values associated with the scale in natural ascending order; for a different order, set the domain explicitly or add a [sort option](#sort-options) to an associated mark. For threshold scales, the default domain is [0] to separate negative and non-negative values. For quantile scales, the default domain is the set of all defined values associated with the scale. If a scale is reversed, it is equivalent to setting the domain as [*max*, *min*] instead of [*min*, *max*].
 
 The default range depends on the scale: for [position scales](#position-options) (*x*, *y*, *fx*, and *fy*), the default range depends on the plot’s [size and margins](#layout-options). For [color scales](#color-options), there are default color schemes for quantitative, ordinal, and categorical data. For opacity, the default range is [0, 1]. And for radius, the default range is designed to produce dots of “reasonable” size assuming a *sqrt* scale type for accurate area representation: zero maps to zero, the first quartile maps to a radius of three pixels, and other values are extrapolated. This convention for radius ensures that if the scale’s data values are all equal, dots have the default constant radius of three pixels, while if the data varies, dots will tend to be larger.
 
@@ -236,7 +235,7 @@ Plot automatically generates axes for position scales. You can configure these a
 * *scale*.**labelAnchor** - the label anchor: *top*, *right*, *bottom*, *left*, or *center*
 * *scale*.**labelOffset** - the label position offset (in pixels; default 0, typically for facet axes)
 
-Plot does not currently generate a legend for the *color*, *radius*, or *opacity* scales, but when it does, we expect that some of the above options will also be used to configure legends. Top-level options are also supported as shorthand: **grid** (for *x* and *y* only; see [facet.grid](#facet-options)), **inset**, **round**, **align**, and **padding**.
+Plot does not currently generate a legend for the *color*, *radius*, or *opacity* scales, but when it does, we expect that some of the above options will also be used to configure legends. Top-level options are also supported as shorthand: **grid** and **line** (for *x* and *y* only; see also [facet.grid](#facet-options)), **label**, **axis**, **inset**, **round**, **align**, and **padding**.
 
 ### Color options
 
@@ -245,13 +244,17 @@ The normal scale types — *linear*, *sqrt*, *pow*, *log*, *symlog*, and *ordina
 * *categorical* - equivalent to *ordinal*, but defaults to the *tableau10* scheme
 * *sequential* - equivalent to *linear*
 * *cyclical* - equivalent to *linear*, but defaults to the *rainbow* scheme
+* *threshold* - encodes based on the specified discrete thresholds
+* *quantile* - encodes based on the computed quantile thresholds
 * *diverging* - like *linear*, but with a pivot; defaults to the *rdbu* scheme
 * *diverging-log* - like *log*, but with a pivot that defaults to 1; defaults to the *rdbu* scheme
 * *diverging-pow* - like *pow*, but with a pivot; defaults to the *rdbu* scheme
 * *diverging-sqrt* - like *sqrt*, but with a pivot; defaults to the *rdbu* scheme
 * *diverging-symlog* - like *symlog*, but with a pivot; defaults to the *rdbu* scheme
-* *threshold* - given a *domain* of *n* = 1 or more values and a *range* of *n* + 1 colors, returns the *i*th color of the *range* for values that are smaller than the *i*th element of the domain. Returns the *n*th color for values above the highest threshold
-* *quantile* - given a number of *quantiles*, bins the channels into ordered *quantiles* having roughly the same number of values, then returns a threshold scale based on the bins’ limits
+
+For a *threshold* scale, the *domain* represents *n* (typically numeric) thresholds which will produce a *range* of *n* + 1 output colors; the *i*th color of the *range* applies to values that are smaller than the *i*th element of the domain and larger or equal to the *i* - 1th element of the domain. For a *quantile* scale, the *domain* represents all input values to the scale, and the *quantiles* option specifies how many quantiles to compute from the *domain*; *n* quantiles will produce *n* - 1 thresholds, and an output range of *n* colors.
+
+By default, all diverging color scales are symmetric around the pivot; set *symmetric* to false if you want to cover the whole extent on both sides.
 
 Color scales support two additional options:
 
@@ -357,6 +360,46 @@ Plot.plot({
 })
 ```
 
+### Sort options
+
+If an ordinal scale’s domain is not set, it defaults to natural ascending order; to order the domain by associated values in another dimension, either compute the domain manually (consider [d3.groupSort](https://github.com/d3/d3-array/blob/main/README.md#groupSort)) or use an associated mark’s **sort** option. For example, to sort bars by ascending frequency rather than alphabetically by letter:
+
+```js
+Plot.barY(alphabet, {x: "letter", y: "frequency", sort: {x: "y"}})
+```
+
+The sort option is an object whose keys are ordinal scale names, such as *x* or *fx*, and whose values are mark channel names, such as *y*, *y1*, or *y2*. By specifying an existing channel rather than a new value, you avoid repeating the order definition and can refer to channels derived by [transforms](#transforms) (such as [stack](#stack) or [bin](#bin)). For marks that implicitly stack ([area](#area), [bar](#bar), and [rect](#rect)), the stacked dimension is aliased: when stacking on *x*, *x* is an alias for *x2*, and when stacking on *y*, *y* is an alias for *y2*.
+
+Note that there may be multiple associated values in the secondary dimension for a given value in the primary ordinal dimension. The secondary values are therefore grouped for each associated primary value, and each group is then aggregated by applying a reducer. Lastly the primary values are sorted based on the associated reduced value in natural ascending order to produce the domain. The default reducer is *max*, but may be changed by specifying the *reduce* option. The above code is shorthand for:
+
+```js
+Plot.barY(alphabet, {x: "letter", y: "frequency", sort: {x: "y", reduce: "max"}})
+```
+
+Generally speaking, a reducer only needs to be specified when there are multiple secondary values for a given primary value. TODO An example of assigning categorical colors in a scatterplot by descending count to maximize discriminability. See the [group transform](#group) for the list of supported reducers.
+
+For descending rather than ascending order, use the *reverse* option:
+
+```js
+Plot.barY(alphabet, {x: "letter", y: "frequency", sort: {x: "y", reverse: true}})
+```
+
+An additional *limit* option truncates the domain to the first *n* values after sorting. If *limit* is negative, the last *n* values are used instead. Hence, a positive *limit* with *reverse* = true will return the top *n* values in descending order. If *limit* is an array [*lo*, *hi*], the *i*th values with *lo* ≤ *i* < *hi* will be selected. (Note that like the [basic filter transform](#transforms), limiting the *x* domain here does not affect the computation of the *y* domain, which is computed independently without respect to filtering.)
+
+```js
+Plot.barY(alphabet, {x: "letter", y: "frequency", sort: {x: "y", limit: 5}})
+```
+
+If different sort options are needed for different ordinal scales, the channel name can be replaced with a *value* object with additional per-scale options.
+
+```js
+Plot.barY(alphabet, {x: "letter", y: "frequency", sort: {x: {value: "y", reverse: true}}})
+```
+
+If the input channel is *data*, then the reducer is passed groups of the mark’s data; this is typically used in conjunction with a custom reducer function, as when the built-in single-channel reducers are insufficient.
+
+Note: when a string or a function, the sort option is interpreted as a [basic sort transform](#transforms). To use both sort options and a sort transform, use [Plot.sort](#plotsortorder-options).
+
 ### Facet options
 
 The *facet* option enables [faceting](https://observablehq.com/@observablehq/plot-facets). When faceting, two additional band scales may be configured:
@@ -379,13 +422,14 @@ The following *facet* constant options are also supported:
 * facet.**marginBottom** - the bottom margin
 * facet.**marginLeft** - the left margin
 * facet.**grid** - if true, draw grid lines for each facet
+* facet.**label** - if null, disable default facet axis labels
 
 Faceting can be explicitly enabled or disabled on a mark with the *facet* option, which accepts the following values:
 
-* *auto* (default) - marks whose data is strictly equal to (`===`) the facet data will be filtered within each facet to show the current facet’s subset (see *include*), whereas other marks will be repeated across facets.
-* *include* - enable faceting for this mark (shorthand: *true*)
-* *exclude* - enable exclusion faceting for this mark (each facet receives all the data except the facet’s subset)
-* null - (or false) disable faceting for this mark
+* *auto* (default) - equivalent to *include* when mark data is strictly equal to facet data; else null
+* *include* (or true) - draw the subset of the mark’s data in the current facet
+* *exclude* - draw the subset of the mark’s data *not* in the current facet
+* null (or false) - repeat this mark’s data across all facets (i.e., no faceting)
 
 ```js
 Plot.plot({
@@ -401,13 +445,13 @@ Plot.plot({
 })
 ```
 
-The strict equality check means that an individual mark that receives a shallow copy of the data, say using [*array*.slice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice) or [*array*.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) has faceting disabled by default.
+When the *include* or *exclude* facet mode is chosen, the mark data must be parallel to the facet data: the mark data must have the same length and order as the facet data. If the data are not parallel, then the wrong data may be shown in each facet. The default *auto* therefore requires strict equality (`===`) for safety, and using the facet data as mark data is recommended when using the *exclude* facet mode. (To construct parallel data safely, consider using [*array*.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map) on the facet data.)
 
 ## Marks
 
 [Marks](https://observablehq.com/@observablehq/plot-marks) visualize data as geometric shapes such as bars, dots, and lines. An single mark can generate multiple shapes: for example, passing a [Plot.barY](#plotbarydata-options) to [Plot.plot](#plotplotoptions) will produce a bar for each element in the associated data. Multiple marks can be layered into [plots](#plotplotoptions).
 
-Mark constructors take two arguments: **data** and **options**. Together these describe a tabular dataset and how to visualize it. Options that are shared by all of a mark’s generated shapes are known as *constants*, while options that vary with the mark’s data are known as *channels*. Channels are typically bound to [scales](#scale-options) and encode abstract values, such as time or temperature, as visual values, such as position or color.
+Mark constructors take two arguments: **data** and **options**. Together these describe a tabular dataset and how to visualize it. Options that are shared by all of a mark’s generated shapes are known as *constants*, while options that vary with the mark’s data are known as *channels*. Channels are typically bound to [scales](#scale-options) and encode abstract values, such as time or temperature, as visual values, such as position or color. (Channels can also be used to order ordinal domains; see [sort options](#sort-options).)
 
 A mark’s data is most commonly an array of objects representing a tabular dataset, such as the result of loading a CSV file, while a mark’s options bind channels (such as *x* and *y*) to columns in the data (such as *units* and *fruit*).
 
@@ -533,7 +577,7 @@ Returns a new area with the given *data* and *options*. Plot.area is rarely used
 Plot.areaX(aapl, {y: "Date", x: "Close"})
 ```
 
-Returns a new area with the given *data* and *options*. This constructor is used when the baseline and topline share *y* values, as in a time-series area chart where time goes up↑. If neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxoptions); this is the typical configuration for an area chart with a baseline at *x* = 0. If the **x** option is not specified, it defaults to the identity function. The **y** option specifies the **y1** channel; and the **y1** and **y2** options are ignored.
+Returns a new area with the given *data* and *options*. This constructor is used when the baseline and topline share *y* values, as in a time-series area chart where time goes up↑. If neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxstack-options); this is the typical configuration for an area chart with a baseline at *x* = 0. If the **x** option is not specified, it defaults to the identity function. The **y** option specifies the **y1** channel; and the **y1** and **y2** options are ignored.
 
 #### Plot.areaY(*data*, *options*)
 
@@ -541,7 +585,7 @@ Returns a new area with the given *data* and *options*. This constructor is used
 Plot.areaY(aapl, {x: "Date", y: "Close"})
 ```
 
-Returns a new area with the given *data* and *options*. This constructor is used when the baseline and topline share *x* values, as in a time-series area chart where time goes right→. If neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackyoptions); this is the typical configuration for an area chart with a baseline at *y* = 0. If the **y** option is not specified, it defaults to the identity function. The **x** option specifies the **x1** channel; and the **x1** and **x2** options are ignored.
+Returns a new area with the given *data* and *options*. This constructor is used when the baseline and topline share *x* values, as in a time-series area chart where time goes right→. If neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackystack-options); this is the typical configuration for an area chart with a baseline at *y* = 0. If the **y** option is not specified, it defaults to the identity function. The **x** option specifies the **x1** channel; and the **x1** and **x2** options are ignored.
 
 ### Bar
 
@@ -562,7 +606,7 @@ Returns a new horizontal bar↔︎ with the given *data* and *options*. The foll
 * **x1** - the starting horizontal position; bound to the *x* scale
 * **x2** - the ending horizontal position; bound to the *x* scale
 
-If neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxoptions); this is the typical configuration for a horizontal bar chart with bars aligned at *x* = 0. If the **x** option is not specified, it defaults to the identity function.
+If neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxstack-options); this is the typical configuration for a horizontal bar chart with bars aligned at *x* = 0. If the **x** option is not specified, it defaults to the identity function.
 
 In addition to the [standard bar channels](#bar), the following optional channels are supported:
 
@@ -581,7 +625,7 @@ Returns a new vertical bar↕︎ with the given *data* and *options*. The follow
 * **y1** - the starting vertical position; bound to the *y* scale
 * **y2** - the ending vertical position; bound to the *y* scale
 
-If neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackyoptions); this is the typical configuration for a vertical bar chart with bars aligned at *y* = 0. If the **y** option is not specified, it defaults to the identity function.
+If neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackystack-options); this is the typical configuration for a vertical bar chart with bars aligned at *y* = 0. If the **y** option is not specified, it defaults to the identity function.
 
 In addition to the [standard bar channels](#bar), the following optional channels are supported:
 
@@ -687,7 +731,7 @@ In addition to the [standard mark options](#marks), the following optional chann
 
 By default, the data is assumed to represent a single series (a single value that varies over time, *e.g.*). If the **z** channel is specified, data is grouped by *z* to form separate series. Typically *z* is a categorical value such as a series name. If **z** is not specified, it defaults to **stroke** if a channel, or **fill** if a channel.
 
-The **stroke** defaults to currentColor. The **fill** defaults to none. If both the stroke and fill are defined as channels, or if the *z* channel is also specified, it is possible for the stroke or fill to vary within a series; varying color within a series is not supported, however, so only the first channel value for each series is considered. This limitation also applies to the **fillOpacity**, **strokeOpacity**, **strokeWidth**, and **title** channels. The **strokeWidth** defaults to 1.5 and the **strokeMiterlimit** defaults to 1.
+The **fill** defaults to none. The **stroke** defaults to currentColor if the fill is none, and to none otherwise. If both the stroke and fill are defined as channels, or if the *z* channel is also specified, it is possible for the stroke or fill to vary within a series; varying color within a series is not supported, however, so only the first channel value for each series is considered. This limitation also applies to the **fillOpacity**, **strokeOpacity**, **strokeWidth**, and **title** channels. The **strokeWidth** defaults to 1.5 and the **strokeMiterlimit** defaults to 1.
 
 Points along the line are connected in input order. Likewise, if there are multiple series via the *z*, *fill*, or *stroke* channel, the series are drawn in input order such that the last series is drawn on top. Typically, the data is already in sorted order, such as chronological for time series; if sorting is needed, consider a [sort transform](#transforms).
 
@@ -771,7 +815,7 @@ Returns a new rect with the given *data* and *options*.
 Plot.rectX(athletes, Plot.binY({x: "count"}, {y: "weight"}))
 ```
 
-Equivalent to [Plot.rect](#plotrectdata-options), except that if neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxoptions); this is the typical configuration for a histogram with rects aligned at *x* = 0. If the **x** option is not specified, it defaults to the identity function.
+Equivalent to [Plot.rect](#plotrectdata-options), except that if neither the **x1** nor **x2** option is specified, the **x** option may be specified as shorthand to apply an implicit [stackX transform](#plotstackxstack-options); this is the typical configuration for a histogram with rects aligned at *x* = 0. If the **x** option is not specified, it defaults to the identity function.
 
 #### Plot.rectY(*data*, *options*)
 
@@ -779,7 +823,7 @@ Equivalent to [Plot.rect](#plotrectdata-options), except that if neither the **x
 Plot.rectY(athletes, Plot.binX({y: "count"}, {x: "weight"}))
 ```
 
-Equivalent to [Plot.rect](#plotrectdata-options), except that if neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackyoptions); this is the typical configuration for a histogram with rects aligned at *y* = 0. If the **y** option is not specified, it defaults to the identity function.
+Equivalent to [Plot.rect](#plotrectdata-options), except that if neither the **y1** nor **y2** option is specified, the **y** option may be specified as shorthand to apply an implicit [stackY transform](#plotstackystack-options); this is the typical configuration for a histogram with rects aligned at *y* = 0. If the **y** option is not specified, it defaults to the identity function.
 
 ### Rule
 
@@ -964,10 +1008,10 @@ The *filter*, *sort* and *reverse* transforms are also available as functions, a
 ### Plot.sort(*order*, *options*)
 
 ```js
-Plot.sort(d => d.value, options) // show data in ascending value order
+Plot.sort("body_mass_g", options) // show data in ascending body mass order
 ```
 
-Sorts the data by the specified *order*, which can be an acessor function, a comparator function, or a channel value definition.
+Sorts the data by the specified *order*, which can be an acessor function, a comparator function, or a channel value definition such as a field name.
 
 ### Plot.reverse(*options*)
 
@@ -980,10 +1024,10 @@ Reverses the order of the data.
 ### Plot.filter(*test*, *options*)
 
 ```js
-Plot.filter(d => d.value > 3, options) // show data whose value is greater than three
+Plot.filter(d => d.body_mass_g > 3000, options) // show data whose body mass is greater than 3kg
 ```
 
-Filters the data given the specified *test*. The test can be given as an accessor function (which receives the datum and index), or as a channel value definition; truthy values are retained.
+Filters the data given the specified *test*. The test can be given as an accessor function (which receives the datum and index), or as a channel value definition such as a field name; truthy values are retained.
 
 ### Bin
 
@@ -1023,7 +1067,9 @@ The following aggregation methods are supported:
 * *proportion* - the sum proportional to the overall total (weighted frequency)
 * *proportion-facet* - the sum proportional to the facet total
 * *min* - the minimum value
+* *min-index* - the zero-based index of the minimum value
 * *max* - the maximum value
+* *max-index* - the zero-based index of the maximum value
 * *mean* - the mean value (average)
 * *median* - the median value
 * *deviation* - the standard deviation
@@ -1040,7 +1086,7 @@ Most aggregation methods require binding the output channel to an input channel;
 Plot.binX({y: "sum"}, {x: "culmen_length_mm", y: "body_mass_g"})
 ```
 
-You can control whether a channel is computed before or after binning. If a channel is declared only in *options* (and it is not a special group-eligible channel such as *x*, *y*, *z*, *fill*, or stroke), it will be computed after binning and be passed the binned data: each datum is the array of input data corresponding to the current bin.
+You can control whether a channel is computed before or after binning. If a channel is declared only in *options* (and it is not a special group-eligible channel such as *x*, *y*, *z*, *fill*, or *stroke*), it will be computed after binning and be passed the binned data: each datum is the array of input data corresponding to the current bin.
 
 ```js
 Plot.binX({y: "count"}, {x: "economy (mpg)", title: bin => bin.map(d => d.name).join("\n")})
@@ -1083,7 +1129,7 @@ The **thresholds** option may be specified as a named method or a variety of oth
 * a time interval (for temporal binning)
 * a function that returns an array, count, or time interval
 
-If the **thresholds** option is specified as a function, it is passed three arguments: the array of input values, the domain minimum, and the domain maximum. If a number, [d3.ticks](https://github.com/d3/d3-array/blob/master/README.md#ticks) or [d3.utcTicks](https://github.com/d3/d3-time/blob/master/README.md#ticks) is used to choose suitable nice thresholds.
+If the **thresholds** option is specified as a function, it is passed three arguments: the array of input values, the domain minimum, and the domain maximum. If a number, [d3.ticks](https://github.com/d3/d3-array/blob/main/README.md#ticks) or [d3.utcTicks](https://github.com/d3/d3-time/blob/master/README.md#ticks) is used to choose suitable nice thresholds.
 
 The bin transform supports grouping in addition to binning: you can subdivide bins by up to two additional ordinal or categorical dimensions (not including faceting). If any of **z**, **fill**, or **stroke** is a channel, the first of these channels will be used to subdivide bins. Similarly, Plot.binX will group on **y** if **y** is not an output channel, and Plot.binY will group on **x** if **x** is not an output channel. For example, for a stacked histogram:
 
@@ -1115,7 +1161,7 @@ Bins on *x*. Also groups on *y* and the first channel of *z*, *fill*, or *stroke
 Plot.rectX(athletes, Plot.binY({x: "count"}, {y: "weight"}))
 ```
 
-Bins on *y*. Groups on on *x* and first channel of *z*, *fill*, or *stroke*, if any.
+Bins on *y*. Also groups on *x* and first channel of *z*, *fill*, or *stroke*, if any.
 
 ### Group
 
@@ -1150,7 +1196,9 @@ The following aggregation methods are supported:
 * *proportion* - the sum proportional to the overall total (weighted frequency)
 * *proportion-facet* - the sum proportional to the facet total
 * *min* - the minimum value
+* *min-index* - the zero-based index of the minimum value
 * *max* - the maximum value
+* *max-index* - the zero-based index of the maximum value
 * *mean* - the mean value (average)
 * *median* - the median value
 * *deviation* - the standard deviation
@@ -1176,7 +1224,7 @@ This is equivalent to declaring the channel only in *outputs*.
 Plot.groupX({y: "count", title: group => group.map(d => d.body_mass_g).join("\n")}, {x: "species"})
 ```
 
-However, if a channel is declared in both *outputs* and *options*, then the channel in *options* is computed before grouping and can then be aggregated using any built-in reducer (or a custom reducer function) during the group transform.
+However, if a channel is declared in both *outputs* and *options*, then the channel in *options* is computed before grouping and can be aggregated using any built-in reducer (or a custom reducer function) during the group transform.
 
 ```js
 Plot.groupX({y: "count", title: masses => masses.join("\n")}, {x: "species", title: "body_mass_g"})
@@ -1376,7 +1424,7 @@ The following **order** methods are supported:
 - *inside-out* - order the earliest-appearing series on the inside
 - an array of *z* values
 
-The **reverse** option reverses the effective order. For the *value* order, Plot.stackY uses the *y*-value while Plot.stackX uses the *x*-value. For the *appearance* order, Plot.stackY uses the *x*-position of the maximum *y*-value while Plot.stackX uses the *y*-position of the maximum *x*-value. If an array of *z* values are specified, they should enumerate the *z* values for all series in the desired order; this array is typically hard-coded or computed with [d3.groupSort](https://github.com/d3/d3-array/blob/master/README.md#groupSort). Note that the input order (null) and *value* order can produce crossing paths: unlike the other order methods, they do not guarantee a consistent series order across stacks.
+The **reverse** option reverses the effective order. For the *value* order, Plot.stackY uses the *y*-value while Plot.stackX uses the *x*-value. For the *appearance* order, Plot.stackY uses the *x*-position of the maximum *y*-value while Plot.stackX uses the *y*-position of the maximum *x*-value. If an array of *z* values are specified, they should enumerate the *z* values for all series in the desired order; this array is typically hard-coded or computed with [d3.groupSort](https://github.com/d3/d3-array/blob/main/README.md#groupSort). Note that the input order (null) and *value* order can produce crossing paths: unlike the other order methods, they do not guarantee a consistent series order across stacks.
 
 The stack transform supports diverging stacks: negative values are stacked below zero while positive values are stacked above zero. For Plot.stackY, the **y1** channel contains the value of lesser magnitude (closer to zero) while the **y2** channel contains the value of greater magnitude (farther from zero); the difference between the two corresponds to the input **y** channel value. For Plot.stackX, the same is true, except for **x1**, **x2**, and **x** respectively.
 
@@ -1393,31 +1441,31 @@ In addition to the **y1** and **y2** output channels, Plot.stackY computers a **
 
 If two arguments are passed to the stack transform functions below, the stack-specific options (**offset**, **order**, and **reverse**) are pulled exclusively from the first *options* argument, while any channels (*e.g.*, **x**, **y**, and **z**) are pulled from second *options* argument. Options from the second argument that are not consumed by the stack transform will be passed through. Using two arguments is sometimes necessary is disambiguate the option recipient when chaining transforms.
 
-#### Plot.stackY(*options*)
+#### Plot.stackY(*stack*, *options*)
 
 ```js
 Plot.stackY({x: "year", y: "revenue", z: "format", fill: "group"})
 ```
 
-Creates new channels **y1** and **y2**, obtained by stacking the original **y** channel for data points that share a common **x** (and possibly **z**) value. A new **y** channel is also returned, which lazily computes the middle value of **y1** and **y2**. The input **y** channel defaults to a constant 1, resulting in a count of the data points.
+Creates new channels **y1** and **y2**, obtained by stacking the original **y** channel for data points that share a common **x** (and possibly **z**) value. A new **y** channel is also returned, which lazily computes the middle value of **y1** and **y2**. The input **y** channel defaults to a constant 1, resulting in a count of the data points. The stack options (*offset*, *order*, and *reverse*) may be specified as part of the *options* object, if the only argument, or as a separate *stack* options argument.
 
-#### Plot.stackY1(*options*)
+#### Plot.stackY1(*stack*, *options*)
 
 ```js
 Plot.stackY1({x: "year", y: "revenue", z: "format", fill: "group"})
 ```
 
-Equivalent to [Plot.stackY](#plotstackyoptions), except that the **y1** channel is returned as the **y** channel. This can be used, for example, to draw a line at the bottom of each stacked area.
+Equivalent to [Plot.stackY](#plotstackystack-options), except that the **y1** channel is returned as the **y** channel. This can be used, for example, to draw a line at the bottom of each stacked area.
 
-#### Plot.stackY2(*options*)
+#### Plot.stackY2(*stack*, *options*)
 
 ```js
 Plot.stackY2({x: "year", y: "revenue", z: "format", fill: "group"})
 ```
 
-Equivalent to [Plot.stackY](#plotstackyoptions), except that the **y2** channel is returned as the **y** channel. This can be used, for example, to draw a line at the top of each stacked area.
+Equivalent to [Plot.stackY](#plotstackystack-options), except that the **y2** channel is returned as the **y** channel. This can be used, for example, to draw a line at the top of each stacked area.
 
-#### Plot.stackX(*options*)
+#### Plot.stackX(*stack*, *options*)
 
 ```js
 Plot.stackX({y: "year", x: "revenue", z: "format", fill: "group"})
@@ -1425,21 +1473,21 @@ Plot.stackX({y: "year", x: "revenue", z: "format", fill: "group"})
 
 See Plot.stackY, but with *x* as the input value channel, *y* as the stack index, *x1*, *x2* and *x* as the output channels.
 
-#### Plot.stackX1(*options*)
+#### Plot.stackX1(*stack*, *options*)
 
 ```js
 Plot.stackX1({y: "year", x: "revenue", z: "format", fill: "group"})
 ```
 
-Equivalent to [Plot.stackX](#plotstackxoptions), except that the **x1** channel is returned as the **x** channel. This can be used, for example, to draw a line at the left edge of each stacked area.
+Equivalent to [Plot.stackX](#plotstackxstack-options), except that the **x1** channel is returned as the **x** channel. This can be used, for example, to draw a line at the left edge of each stacked area.
 
-#### Plot.stackX2(*options*)
+#### Plot.stackX2(*stack*, *options*)
 
 ```js
 Plot.stackX2({y: "year", x: "revenue", z: "format", fill: "group"})
 ```
 
-Equivalent to [Plot.stackX](#plotstackxoptions), except that the **x2** channel is returned as the **x** channel. This can be used, for example, to draw a line at the right edge of each stacked area.
+Equivalent to [Plot.stackX](#plotstackxstack-options), except that the **x2** channel is returned as the **x** channel. This can be used, for example, to draw a line at the right edge of each stacked area.
 
 ## Curves
 
