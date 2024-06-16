@@ -1,7 +1,7 @@
 {
   "name": "@observablehq/plot",
   "description": "A JavaScript library for exploratory data visualization.",
-  "version": "0.6.14",
+  "version": "0.6.15",
   "author": {
     "name": "Observable, Inc.",
     "url": "https://observablehq.com"
@@ -34,7 +34,6 @@
     "test:prettier": "prettier --check src test",
     "test:tsc": "tsc",
     "prepublishOnly": "rm -rf dist && rollup -c",
-    "postpublish": "git push && git push --tags",
     "dev": "vite",
     "docs:dev": "node --experimental-network-imports node_modules/vitepress/dist/node/cli.js dev docs",
     "docs:build": "node --experimental-network-imports node_modules/vitepress/dist/node/cli.js build docs",
